@@ -1,0 +1,58 @@
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { ConfigService } from '@nestjs/config';
+import { StorageProvider } from '../interfaces/storage-provider.interface';
+
+export class S3StorageAdapter implements StorageProvider {
+  private client: S3Client;
+  private bucket: string;
+  private publicUrl: string;
+
+  constructor(private configService: ConfigService) {
+    this.bucket = this.configService.getOrThrow<string>('STORAGE_BUCKET');
+    this.publicUrl = this.configService.getOrThrow<string>('STORAGE_PUBLIC_URL');
+
+    this.client = new S3Client({
+      endpoint: this.configService.get<string>('STORAGE_ENDPOINT'),
+      region: this.configService.getOrThrow<string>('STORAGE_REGION'),
+      credentials: {
+        accessKeyId: this.configService.getOrThrow<string>('STORAGE_ACCESS_KEY'),
+        secretAccessKey: this.configService.getOrThrow<string>('STORAGE_SECRET_KEY'),
+      },
+    });
+  }
+
+  async upload(file: Buffer, key: string, contentType: string): Promise<string> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: file,
+      ContentType: contentType,
+    });
+
+    await this.client.send(command);
+    return this.getUrl(key);
+  }
+
+  async delete(key: string): Promise<void> {
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    await this.client.send(command);
+  }
+
+  getUrl(key: string): string {
+    return `${this.publicUrl}/${key}`;
+  }
+
+  async generateSignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    return getSignedUrl(this.client, command, { expiresIn });
+  }
+}

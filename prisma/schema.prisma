@@ -1,0 +1,754 @@
+// =============================================================================
+// Katalog — Prisma Schema
+// SaaS multi-tenant pour la création automatique de catalogues professionnels
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ShopMemberRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  PENDING_REVIEW
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  FLAGGED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+  DISPUTED
+  PENDING
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  EXPIRED
+  REFUNDED
+  PENDING_RECONCILIATION
+  DISPUTED
+}
+
+enum PaymentProvider {
+  STRIPE
+  CINETPAY
+  NOTCHPAY
+  PAWAPAY
+}
+
+enum ImageJobStatus {
+  QUEUED
+  UPLOADING
+  VALIDATING
+  MODERATING
+  ANALYZING
+  DETECTING
+  CROPPING
+  OPTIMIZING
+  GENERATING_THUMBNAIL
+  STORING
+  COMPLETED
+  FAILED
+}
+
+enum AnalyticsEventType {
+  CATALOG_VIEW
+  PRODUCT_VIEW
+  WHATSAPP_CLICK
+  PHONE_CLICK
+  PDF_DOWNLOAD
+  QR_SCAN
+}
+
+enum NotificationType {
+  EMAIL_VERIFIED
+  CATALOGUE_CREATED
+  PDF_READY
+  SUBSCRIPTION_ACTIVATED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  SUBSCRIPTION_EXPIRED
+  DISPUTE_CREATED
+  DISPUTE_RESOLVED
+  PRODUCT_FLAGGED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  IMPORT
+  MODERATE
+  APPROVE
+  REJECT
+  SUSPEND
+  RESTORE
+}
+
+// =============================================================================
+// USERS & AUTH
+// =============================================================================
+
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique
+  name            String?
+  passwordHash    String?   @map("password_hash")
+  avatarUrl       String?   @map("avatar_url")
+  role            UserRole  @default(USER)
+  emailVerifiedAt DateTime? @map("email_verified_at")
+
+  // 2FA
+  twoFactorSecret  String?  @map("two_factor_secret")
+  twoFactorEnabled Boolean  @default(false) @map("two_factor_enabled")
+  backupCodes      String[] @map("backup_codes")
+
+  locale    String @default("fr")
+  timezone  String @default("Africa/Douala")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  accounts            Account[]
+  sessions            Session[]
+  verificationTokens  VerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+  shopMemberships     ShopMember[]
+  ownedShops          Shop[]            @relation("ShopOwner")
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+
+  @@index([email])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(uuid()) @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  accessToken       String? @map("access_token")
+  refreshToken      String? @map("refresh_token")
+  expiresAt         Int?    @map("expires_at")
+  tokenType         String? @map("token_type")
+  scope             String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  refreshToken String   @map("refresh_token")
+  userAgent    String?  @map("user_agent")
+  ipAddress    String?  @map("ip_address")
+  expiresAt    DateTime @map("expires_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// =============================================================================
+// SHOPS & MULTI-TENANT
+// =============================================================================
+
+model Shop {
+  id          String  @id @default(uuid()) @db.Uuid
+  ownerId     String  @map("owner_id") @db.Uuid
+  name        String
+  slug        String  @unique
+  logoUrl     String? @map("logo_url")
+  coverUrl    String? @map("cover_url")
+  description String?
+  country     String  @default("CM")
+  city        String?
+  currency    String  @default("XAF")
+  phone       String?
+  whatsapp    String?
+  address     String?
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  owner      User         @relation("ShopOwner", fields: [ownerId], references: [id])
+  members    ShopMember[]
+  settings   ShopSetting?
+  products   Product[]
+  categories Category[]
+  collections Collection[]
+  catalogues Catalogue[]
+  subscriptions Subscription[]
+  aiGenerations AiGeneration[]
+  imageJobs     ImageProcessingJob[]
+  qrCodes       QrCode[]
+  analyticsEvents AnalyticsEvent[]
+  notifications   Notification[]
+
+  @@index([ownerId])
+  @@index([slug])
+  @@index([deletedAt])
+  @@map("shops")
+}
+
+model ShopMember {
+  id     String         @id @default(uuid()) @db.Uuid
+  shopId String         @map("shop_id") @db.Uuid
+  userId String         @map("user_id") @db.Uuid
+  role   ShopMemberRole @default(VIEWER)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, userId])
+  @@index([userId])
+  @@map("shop_members")
+}
+
+model ShopSetting {
+  id     String @id @default(uuid()) @db.Uuid
+  shopId String @unique @map("shop_id") @db.Uuid
+
+  // Display
+  primaryColor   String? @map("primary_color")
+  secondaryColor String? @map("secondary_color")
+  fontFamily     String? @map("font_family")
+
+  // SEO
+  metaTitle       String? @map("meta_title")
+  metaDescription String? @map("meta_description")
+  ogImageUrl      String? @map("og_image_url")
+
+  // Social
+  facebookUrl  String? @map("facebook_url")
+  instagramUrl String? @map("instagram_url")
+  tiktokUrl    String? @map("tiktok_url")
+  websiteUrl   String? @map("website_url")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@map("shop_settings")
+}
+
+model ReservedSlug {
+  id   String @id @default(uuid()) @db.Uuid
+  slug String @unique
+
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([slug])
+  @@map("reserved_slugs")
+}
+
+// =============================================================================
+// PRODUCTS
+// =============================================================================
+
+model Product {
+  id          String        @id @default(uuid()) @db.Uuid
+  shopId      String        @map("shop_id") @db.Uuid
+  name        String
+  slug        String
+  description String?
+  price       Decimal       @default(0) @db.Decimal(12, 2)
+  currency    String        @default("XAF")
+  categoryId  String?       @map("category_id") @db.Uuid
+  status      ProductStatus @default(DRAFT)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  shop       Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category   Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  images     ProductImage[]
+  collections ProductCollection[]
+  analyticsEvents AnalyticsEvent[]
+
+  @@unique([shopId, slug])
+  @@index([shopId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("products")
+}
+
+model ProductImage {
+  id            String           @id @default(uuid()) @db.Uuid
+  productId     String           @map("product_id") @db.Uuid
+  originalUrl   String           @map("original_url")
+  processedUrl  String?          @map("processed_url")
+  thumbnailUrl  String?          @map("thumbnail_url")
+  position      Int              @default(0)
+  width         Int?
+  height        Int?
+  moderationStatus ModerationStatus @default(PENDING) @map("moderation_status")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([moderationStatus])
+  @@map("product_images")
+}
+
+// =============================================================================
+// CATEGORIES
+// =============================================================================
+
+model Category {
+  id       String  @id @default(uuid()) @db.Uuid
+  shopId   String? @map("shop_id") @db.Uuid
+  name     String
+  slug     String
+  parentId String? @map("parent_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  shop     Shop?     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@unique([shopId, slug])
+  @@index([shopId])
+  @@index([parentId])
+  @@map("categories")
+}
+
+// =============================================================================
+// COLLECTIONS
+// =============================================================================
+
+model Collection {
+  id          String  @id @default(uuid()) @db.Uuid
+  shopId      String  @map("shop_id") @db.Uuid
+  name        String
+  slug        String
+  description String?
+  coverUrl    String? @map("cover_url")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  shop     Shop                @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  products ProductCollection[]
+
+  @@unique([shopId, slug])
+  @@index([shopId])
+  @@map("collections")
+}
+
+model ProductCollection {
+  id           String @id @default(uuid()) @db.Uuid
+  productId    String @map("product_id") @db.Uuid
+  collectionId String @map("collection_id") @db.Uuid
+  position     Int    @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, collectionId])
+  @@index([collectionId])
+  @@map("product_collections")
+}
+
+// =============================================================================
+// CATALOGUES & TEMPLATES
+// =============================================================================
+
+model Catalogue {
+  id         String  @id @default(uuid()) @db.Uuid
+  shopId     String  @map("shop_id") @db.Uuid
+  templateId String? @map("template_id") @db.Uuid
+  published  Boolean @default(false)
+  publicSlug String? @unique @map("public_slug")
+  pdfUrl     String? @map("pdf_url")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  shop     Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  template CatalogueTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  qrCodes  QrCode[]
+
+  @@index([shopId])
+  @@index([publicSlug])
+  @@map("catalogues")
+}
+
+model CatalogueTemplate {
+  id            String  @id @default(uuid()) @db.Uuid
+  name          String
+  slug          String  @unique
+  previewUrl    String? @map("preview_url")
+  configuration Json    @default("{}")
+  active        Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  catalogues Catalogue[]
+
+  @@map("catalogue_templates")
+}
+
+// =============================================================================
+// SUBSCRIPTIONS & BILLING
+// =============================================================================
+
+model Plan {
+  id   String @id @default(uuid()) @db.Uuid
+  name String @unique
+  slug String @unique
+
+  // Pricing
+  priceMonthly Decimal @default(0) @map("price_monthly") @db.Decimal(12, 2)
+  priceYearly  Decimal @default(0) @map("price_yearly") @db.Decimal(12, 2)
+  currency     String  @default("XAF")
+
+  // Quotas
+  maxShops       Int @default(1) @map("max_shops")
+  maxProducts    Int @default(20) @map("max_products")
+  maxCatalogues  Int @default(1) @map("max_catalogues")
+  maxAiPerMonth  Int @default(10) @map("max_ai_per_month")
+  maxPdfPerMonth Int @default(5) @map("max_pdf_per_month")
+
+  // Features
+  premiumTemplates   Boolean @default(false) @map("premium_templates")
+  customDomain       Boolean @default(false) @map("custom_domain")
+  advancedAnalytics  Boolean @default(false) @map("advanced_analytics")
+  prioritySupport    Boolean @default(false) @map("priority_support")
+  removeBranding     Boolean @default(false) @map("remove_branding")
+
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id     String             @id @default(uuid()) @db.Uuid
+  shopId String             @map("shop_id") @db.Uuid
+  planId String             @map("plan_id") @db.Uuid
+  status SubscriptionStatus @default(PENDING)
+
+  providerSubscriptionId String?         @map("provider_subscription_id")
+  provider               PaymentProvider? @map("provider")
+
+  currentPeriodStart DateTime? @map("current_period_start")
+  currentPeriodEnd   DateTime? @map("current_period_end")
+  canceledAt         DateTime? @map("canceled_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  shop     Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  plan     Plan      @relation(fields: [planId], references: [id])
+  payments Payment[]
+  invoices Invoice[]
+
+  @@index([shopId])
+  @@index([status])
+  @@index([provider, providerSubscriptionId])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id             String         @id @default(uuid()) @db.Uuid
+  subscriptionId String?        @map("subscription_id") @db.Uuid
+  shopId         String         @map("shop_id") @db.Uuid
+  amount         Decimal        @db.Decimal(12, 2)
+  currency       String         @default("XAF")
+  status         PaymentStatus  @default(PENDING)
+  provider       PaymentProvider
+  
+  providerPaymentId String?  @map("provider_payment_id")
+  idempotencyKey    String?  @unique @map("idempotency_key")
+  metadata          Json?
+
+  paidAt             DateTime? @map("paid_at")
+  reconciledAt       DateTime? @map("reconciled_at")
+  disputeReason      String?   @map("dispute_reason")
+  disputeStatus      String?   @map("dispute_status")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@index([subscriptionId])
+  @@index([shopId])
+  @@index([status])
+  @@index([provider, providerPaymentId])
+  @@index([idempotencyKey])
+  @@index([status, createdAt])
+  @@map("payments")
+}
+
+model Invoice {
+  id             String  @id @default(uuid()) @db.Uuid
+  subscriptionId String  @map("subscription_id") @db.Uuid
+  number         String  @unique
+  amount         Decimal @db.Decimal(12, 2)
+  currency       String  @default("XAF")
+  pdfUrl         String? @map("pdf_url")
+
+  issuedAt DateTime @default(now()) @map("issued_at")
+  dueAt    DateTime @map("due_at")
+  paidAt   DateTime? @map("paid_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([subscriptionId])
+  @@map("invoices")
+}
+
+// =============================================================================
+// AI & IMAGE PROCESSING
+// =============================================================================
+
+model AiGeneration {
+  id        String @id @default(uuid()) @db.Uuid
+  shopId    String @map("shop_id") @db.Uuid
+  userId    String @map("user_id") @db.Uuid
+  type      String // analyze, suggest_name, suggest_category, generate_description, moderate
+  provider  String
+  model     String?
+  inputData Json?  @map("input_data")
+  output    Json?
+  
+  tokensUsed Int? @map("tokens_used")
+  costEstimate Decimal? @map("cost_estimate") @db.Decimal(10, 6)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([userId])
+  @@index([shopId, createdAt])
+  @@index([userId, createdAt])
+  @@map("ai_generations")
+}
+
+model ImageProcessingJob {
+  id       String         @id @default(uuid()) @db.Uuid
+  shopId   String         @map("shop_id") @db.Uuid
+  imageId  String?        @map("image_id") @db.Uuid
+  status   ImageJobStatus @default(QUEUED)
+
+  originalKey  String? @map("original_key")
+  processedKey String? @map("processed_key")
+  thumbnailKey String? @map("thumbnail_key")
+
+  moderationResult Json?   @map("moderation_result")
+  analysisResult   Json?   @map("analysis_result")
+  error            String?
+  attempts         Int     @default(0)
+
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([status])
+  @@map("image_processing_jobs")
+}
+
+// =============================================================================
+// QR CODES
+// =============================================================================
+
+model QrCode {
+  id          String @id @default(uuid()) @db.Uuid
+  shopId      String @map("shop_id") @db.Uuid
+  catalogueId String @map("catalogue_id") @db.Uuid
+  targetUrl   String @map("target_url")
+  imageUrl    String? @map("image_url")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  shop      Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  catalogue Catalogue @relation(fields: [catalogueId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([catalogueId])
+  @@map("qr_codes")
+}
+
+// =============================================================================
+// ANALYTICS
+// =============================================================================
+
+model AnalyticsEvent {
+  id        String             @id @default(uuid()) @db.Uuid
+  shopId    String             @map("shop_id") @db.Uuid
+  productId String?            @map("product_id") @db.Uuid
+  eventType AnalyticsEventType @map("event_type")
+  source    String?
+  dedupHash String?            @map("dedup_hash")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  shop    Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([shopId])
+  @@index([shopId, eventType])
+  @@index([shopId, createdAt])
+  @@index([dedupHash])
+  @@map("analytics_events")
+}
+
+// =============================================================================
+// NOTIFICATIONS
+// =============================================================================
+
+model Notification {
+  id     String           @id @default(uuid()) @db.Uuid
+  userId String           @map("user_id") @db.Uuid
+  shopId String?          @map("shop_id") @db.Uuid
+  type   NotificationType
+  title  String
+  body   String
+  data   Json?
+  readAt DateTime?        @map("read_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop Shop? @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, readAt])
+  @@index([shopId])
+  @@map("notifications")
+}
+
+// =============================================================================
+// AUDIT LOGS
+// =============================================================================
+
+model AuditLog {
+  id       String      @id @default(uuid()) @db.Uuid
+  userId   String?     @map("user_id") @db.Uuid
+  action   AuditAction
+  entity   String
+  entityId String?     @map("entity_id")
+  changes  Json?
+  
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
