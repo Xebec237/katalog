@@ -7,11 +7,8 @@ import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ShopAccessGuard } from '@/common/guards/shop-access.guard';
-import { RolesGuard } from '@/common/guards/roles.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { Roles } from '@/common/decorators/roles.decorator';
 import { PaginationDto } from '@/common/pagination/pagination.dto';
-import { ShopMemberRole } from '@prisma/client';
 
 @ApiTags('shops')
 @ApiBearerAuth()
@@ -40,24 +37,21 @@ export class ShopsController {
   }
 
   @Patch(':shopId')
-  @UseGuards(ShopAccessGuard, RolesGuard)
-  @Roles(ShopMemberRole.OWNER)
+  @UseGuards(ShopAccessGuard)
   @ApiOperation({ summary: 'Update shop' })
   update(@Param('shopId') id: string, @Body() updateShopDto: UpdateShopDto) {
     return this.shopsService.update(id, updateShopDto);
   }
 
   @Delete(':shopId')
-  @UseGuards(ShopAccessGuard, RolesGuard)
-  @Roles(ShopMemberRole.OWNER)
+  @UseGuards(ShopAccessGuard)
   @ApiOperation({ summary: 'Soft delete shop' })
   softDelete(@Param('shopId') id: string) {
     return this.shopsService.softDelete(id);
   }
 
   @Post(':shopId/members')
-  @UseGuards(ShopAccessGuard, RolesGuard)
-  @Roles(ShopMemberRole.OWNER)
+  @UseGuards(ShopAccessGuard)
   @ApiOperation({ summary: 'Add a member to the shop' })
   addMember(@Param('shopId') shopId: string, @Body() addMemberDto: AddMemberDto) {
     return this.shopsService.addMember(shopId, addMemberDto);
@@ -71,8 +65,7 @@ export class ShopsController {
   }
 
   @Delete(':shopId/members/:memberId')
-  @UseGuards(ShopAccessGuard, RolesGuard)
-  @Roles(ShopMemberRole.OWNER)
+  @UseGuards(ShopAccessGuard)
   @ApiOperation({ summary: 'Remove a member from the shop' })
   removeMember(@Param('shopId') shopId: string, @Param('memberId') memberId: string) {
     return this.shopsService.removeMember(shopId, memberId);
@@ -86,8 +79,7 @@ export class ShopsController {
   }
 
   @Patch(':shopId/settings')
-  @UseGuards(ShopAccessGuard, RolesGuard)
-  @Roles(ShopMemberRole.OWNER, ShopMemberRole.EDITOR)
+  @UseGuards(ShopAccessGuard)
   @ApiOperation({ summary: 'Update shop settings' })
   updateSettings(@Param('shopId') shopId: string, @Body() updateSettingsDto: UpdateSettingsDto) {
     return this.shopsService.updateSettings(shopId, updateSettingsDto);

@@ -15,6 +15,10 @@ export class EmailService {
     this.appUrl = this.configService.get<string>('APP_URL', 'http://localhost:3000');
   }
 
+  async sendEmail(options: { to: string; subject: string; html: string; from?: string }): Promise<void> {
+    await this.emailProvider.send(options);
+  }
+
   async sendVerificationEmail(to: string, name: string, token: string): Promise<void> {
     const link = `${this.appUrl}/verify-email?token=${token}`;
     const html = `

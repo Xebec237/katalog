@@ -2,16 +2,16 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '@/integrations/storage/storage.service';
-import { AIService } from '@/integrations/ai/ai.service';
+import { AiService } from '@/integrations/ai/ai.service';
 import { ImageJobStatus, ModerationStatus, ProductStatus } from '@prisma/client';
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 
 @Processor('image-processing', { concurrency: 2 })
 export class ImageProcessor extends WorkerHost {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
-    private readonly aiService: AIService,
+    private readonly aiService: AiService,
   ) {
     super();
   }
@@ -29,14 +29,15 @@ export class ImageProcessor extends WorkerHost {
     try {
       await updateJob(ImageJobStatus.UPLOADING, { startedAt: new Date() });
       const originalBuffer = await this.storageService.getFile(originalKey);
+      const originalUrl = this.storageService.getPublicUrl(originalKey);
 
       await updateJob(ImageJobStatus.VALIDATING);
       const metadata = await sharp(originalBuffer).metadata();
       if (!metadata) throw new Error('Invalid image format');
 
       await updateJob(ImageJobStatus.MODERATING);
-      const moderationResult = await this.aiService.moderateImageContent(originalBuffer);
-      if (moderationResult.flagged) {
+      const moderationResult = await this.aiService.moderateImageContent(originalUrl);
+      if (!moderationResult.safe) {
         await this.prisma.productImage.update({
           where: { id: imageId },
           data: { moderationStatus: ModerationStatus.FLAGGED },
@@ -48,15 +49,22 @@ export class ImageProcessor extends WorkerHost {
       }
 
       await updateJob(ImageJobStatus.ANALYZING);
-      const analysisResult = await this.aiService.analyzeProductImage(originalBuffer);
+      const analysisResult = await this.aiService.analyzeProductImage(shopId, originalUrl);
       
       await updateJob(ImageJobStatus.DETECTING);
-      const boundingBox = await this.aiService.detectProductBoundingBox(originalBuffer);
+      const boundingBox = await this.aiService.detectProductBoundingBox(shopId, originalUrl);
 
       await updateJob(ImageJobStatus.CROPPING);
       let processedBuffer = originalBuffer;
-      if (boundingBox) {
-        processedBuffer = await sharp(originalBuffer).extract(boundingBox).toBuffer();
+      if (boundingBox && boundingBox.width > 0 && boundingBox.height > 0) {
+        processedBuffer = await sharp(originalBuffer)
+          .extract({
+            left: Math.max(0, Math.floor(boundingBox.x)),
+            top: Math.max(0, Math.floor(boundingBox.y)),
+            width: Math.floor(boundingBox.width),
+            height: Math.floor(boundingBox.height),
+          })
+          .toBuffer();
       }
 
       await updateJob(ImageJobStatus.OPTIMIZING);
@@ -91,11 +99,11 @@ export class ImageProcessor extends WorkerHost {
       await updateJob(ImageJobStatus.COMPLETED, {
         processedKey,
         thumbnailKey,
-        analysisResult,
+        analysisResult: analysisResult as any,
         completedAt: new Date(),
       });
 
-    } catch (error) {
+    } catch (error: any) {
       await updateJob(ImageJobStatus.FAILED, {
         error: error.message,
         completedAt: new Date(),

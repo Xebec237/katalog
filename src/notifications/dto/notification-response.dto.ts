@@ -23,7 +23,9 @@ export class NotificationResponseDto {
   @ApiProperty()
   createdAt: Date;
 
-  constructor(partial: Partial<NotificationResponseDto>) {
-    Object.assign(this, partial);
+  constructor(partial: any) {
+    if (partial) {
+      Object.assign(this, partial);
+    }
   }
 }

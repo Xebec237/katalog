@@ -25,7 +25,13 @@ export class CataloguesService {
       },
     });
 
-    await this.auditService.log(userId, AuditAction.CREATE, 'Catalogue', catalogue.id, dto);
+    await this.auditService.log({
+      userId,
+      action: AuditAction.CREATE,
+      entity: 'Catalogue',
+      entityId: catalogue.id,
+      changes: dto,
+    });
     return catalogue;
   }
 
@@ -54,18 +60,29 @@ export class CataloguesService {
   async update(shopId: string, id: string, dto: UpdateCatalogueDto, userId: string) {
     const catalogue = await this.findOne(shopId, id);
     const updated = await this.prisma.catalogue.update({
-      where: { id },
+      where: { id: catalogue.id },
       data: { templateId: dto.templateId },
     });
 
-    await this.auditService.log(userId, AuditAction.UPDATE, 'Catalogue', id, dto);
+    await this.auditService.log({
+      userId,
+      action: AuditAction.UPDATE,
+      entity: 'Catalogue',
+      entityId: id,
+      changes: dto,
+    });
     return updated;
   }
 
   async remove(shopId: string, id: string, userId: string) {
-    await this.findOne(shopId, id);
-    await this.prisma.catalogue.delete({ where: { id } });
-    await this.auditService.log(userId, AuditAction.DELETE, 'Catalogue', id);
+    const catalogue = await this.findOne(shopId, id);
+    await this.prisma.catalogue.delete({ where: { id: catalogue.id } });
+    await this.auditService.log({
+      userId,
+      action: AuditAction.DELETE,
+      entity: 'Catalogue',
+      entityId: id,
+    });
   }
 
   async publish(shopId: string, id: string, userId: string) {
@@ -75,20 +92,32 @@ export class CataloguesService {
       publicSlug = `${shopId.substring(0,8)}-${uuidv4().substring(0,8)}`;
     }
     const published = await this.prisma.catalogue.update({
-      where: { id },
+      where: { id: catalogue.id },
       data: { published: true, publicSlug },
     });
-    await this.auditService.log(userId, AuditAction.UPDATE, 'Catalogue', id, { published: true });
+    await this.auditService.log({
+      userId,
+      action: AuditAction.UPDATE,
+      entity: 'Catalogue',
+      entityId: id,
+      changes: { published: true },
+    });
     return published;
   }
 
   async unpublish(shopId: string, id: string, userId: string) {
-    await this.findOne(shopId, id);
+    const catalogue = await this.findOne(shopId, id);
     const unpublished = await this.prisma.catalogue.update({
-      where: { id },
+      where: { id: catalogue.id },
       data: { published: false },
     });
-    await this.auditService.log(userId, AuditAction.UPDATE, 'Catalogue', id, { published: false });
+    await this.auditService.log({
+      userId,
+      action: AuditAction.UPDATE,
+      entity: 'Catalogue',
+      entityId: id,
+      changes: { published: false },
+    });
     return unpublished;
   }
 }

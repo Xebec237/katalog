@@ -1,5 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class ShopAccessGuard implements CanActivate {
@@ -12,13 +13,19 @@ export class ShopAccessGuard implements CanActivate {
 
     if (!shopId) return true;
 
-    if (user.role === 'ADMIN') return true;
+    if (user && (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN)) {
+      return true;
+    }
+
+    if (!user || !user.id) {
+      throw new ForbiddenException('User authentication required');
+    }
 
     const membership = await this.prisma.shopMember.findUnique({
       where: {
-        shop_id_user_id: {
-          shop_id: shopId,
-          user_id: user.id,
+        shopId_userId: {
+          shopId,
+          userId: user.id,
         },
       },
     });

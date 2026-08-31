@@ -29,13 +29,18 @@ export class SubscriptionsService {
     const plan = await this.prisma.plan.findUnique({ where: { id: planId, active: true } });
     if (!plan) throw new NotFoundException('Plan not found');
 
-    const shop = await this.prisma.shop.findUnique({ where: { id: shopId } });
-    
+    const shop = await this.prisma.shop.findUnique({ where: { id: shopId }, include: { owner: true } });
+    if (!shop) throw new NotFoundException('Shop not found');
+
+    const appUrl = process.env.APP_URL || 'http://localhost:3000';
     const checkoutUrl = await this.paymentService.createCheckoutSession({
       shopId,
+      planId,
       amount: Number(plan.priceMonthly),
       currency: plan.currency,
-      metadata: { planId },
+      customerEmail: (shop as any).owner?.email || '',
+      returnUrl: `${appUrl}/subscription/success`,
+      cancelUrl: `${appUrl}/subscription/cancel`,
     });
 
     return checkoutUrl;

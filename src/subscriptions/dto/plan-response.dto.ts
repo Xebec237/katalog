@@ -28,9 +28,11 @@ export class PlanResponseDto {
   @ApiProperty()
   maxCatalogues: number;
 
-  constructor(partial: Partial<PlanResponseDto>) {
-    Object.assign(this, partial);
-    if (partial.priceMonthly) this.priceMonthly = Number(partial.priceMonthly);
-    if (partial.priceYearly) this.priceYearly = Number(partial.priceYearly);
+  constructor(partial: any) {
+    if (partial) {
+      Object.assign(this, partial);
+      if (partial.priceMonthly !== undefined) this.priceMonthly = Number(partial.priceMonthly);
+      if (partial.priceYearly !== undefined) this.priceYearly = Number(partial.priceYearly);
+    }
   }
 }

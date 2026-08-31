@@ -20,7 +20,10 @@ export class RedisService implements OnModuleInit, OnApplicationShutdown {
     return this.client.get(key);
   }
 
-  async set(key: string, value: string): Promise<'OK'> {
+  async set(key: string, value: string, ttlSeconds?: number): Promise<'OK'> {
+    if (ttlSeconds) {
+      return this.client.setex(key, ttlSeconds, value);
+    }
     return this.client.set(key, value);
   }
 

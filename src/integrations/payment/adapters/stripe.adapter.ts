@@ -18,7 +18,7 @@ export class StripeAdapter implements PaymentProviderInterface {
     const secretKey = this.configService.getOrThrow<string>('STRIPE_SECRET_KEY');
     this.webhookSecret = this.configService.getOrThrow<string>('STRIPE_WEBHOOK_SECRET');
     this.stripe = new Stripe(secretKey, {
-      apiVersion: '2025-01-27.acacia', // Example current version
+      apiVersion: '2025-02-24.acacia' as any,
     });
   }
 

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
 import { StorageProvider } from '../interfaces/storage-provider.interface';
@@ -10,14 +10,19 @@ export class S3StorageAdapter implements StorageProvider {
 
   constructor(private configService: ConfigService) {
     this.bucket = this.configService.getOrThrow<string>('STORAGE_BUCKET');
-    this.publicUrl = this.configService.getOrThrow<string>('STORAGE_PUBLIC_URL');
+    this.publicUrl = this.configService.get<string>('STORAGE_PUBLIC_URL', 'http://localhost:3000/storage');
+
+    const endpoint = this.configService.get<string>('STORAGE_ENDPOINT');
+    const region = this.configService.get<string>('STORAGE_REGION', 'auto');
+    const accessKeyId = this.configService.get<string>('STORAGE_ACCESS_KEY', 'default');
+    const secretAccessKey = this.configService.get<string>('STORAGE_SECRET_KEY', 'default');
 
     this.client = new S3Client({
-      endpoint: this.configService.get<string>('STORAGE_ENDPOINT'),
-      region: this.configService.getOrThrow<string>('STORAGE_REGION'),
+      endpoint: endpoint || undefined,
+      region,
       credentials: {
-        accessKeyId: this.configService.getOrThrow<string>('STORAGE_ACCESS_KEY'),
-        secretAccessKey: this.configService.getOrThrow<string>('STORAGE_SECRET_KEY'),
+        accessKeyId,
+        secretAccessKey,
       },
     });
   }
@@ -54,5 +59,16 @@ export class S3StorageAdapter implements StorageProvider {
     });
 
     return getSignedUrl(this.client, command, { expiresIn });
+  }
+
+  async getFile(key: string): Promise<Buffer> {
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    const response = await this.client.send(command);
+    const byteArray = await response.Body?.transformToByteArray();
+    return Buffer.from(byteArray || []);
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AuditService } from '@/audit/audit.service';
-import { UserRole, AuditAction, ProductStatus, ModerationStatus } from '@prisma/client';
+import { UserRole, AuditAction, ProductStatus, ModerationStatus, PaymentStatus } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -34,7 +34,7 @@ export class AdminService {
 
   async updateUserRole(targetUserId: string, role: string, adminId: string) {
     const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
-    if (admin.role !== UserRole.SUPER_ADMIN) {
+    if (!admin || admin.role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only SUPER_ADMIN can change roles');
     }
 
@@ -43,7 +43,13 @@ export class AdminService {
       data: { role: role as UserRole },
     });
 
-    await this.auditService.log(adminId, AuditAction.UPDATE, 'UserRole', targetUserId, { role });
+    await this.auditService.log({
+      userId: adminId,
+      action: AuditAction.UPDATE,
+      entity: 'UserRole',
+      entityId: targetUserId,
+      changes: { role },
+    });
     return updated;
   }
 
@@ -54,7 +60,7 @@ export class AdminService {
         skip: (page - 1) * limit,
         take: Number(limit),
         orderBy: { createdAt: 'desc' },
-        include: { owner: { select: { email: true } } }
+        include: { owner: { select: { email: true } } },
       }),
       this.prisma.shop.count(),
     ]);
@@ -71,7 +77,7 @@ export class AdminService {
         skip: (page - 1) * limit,
         take: Number(limit),
         orderBy: { createdAt: 'desc' },
-        include: { shop: { select: { name: true } } }
+        include: { shop: { select: { name: true } } },
       }),
       this.prisma.product.count({ where }),
     ]);
@@ -94,7 +100,12 @@ export class AdminService {
     }
 
     const auditAction = action === 'approve' ? AuditAction.APPROVE : AuditAction.REJECT;
-    await this.auditService.log(adminId, auditAction, 'Product', productId);
+    await this.auditService.log({
+      userId: adminId,
+      action: auditAction,
+      entity: 'Product',
+      entityId: productId,
+    });
     
     return updated;
   }
@@ -106,7 +117,7 @@ export class AdminService {
         skip: (page - 1) * limit,
         take: Number(limit),
         orderBy: { createdAt: 'desc' },
-        include: { plan: true, shop: { select: { name: true } } }
+        include: { plan: true, shop: { select: { name: true } } },
       }),
       this.prisma.subscription.count(),
     ]);
@@ -120,7 +131,7 @@ export class AdminService {
         skip: (page - 1) * limit,
         take: Number(limit),
         orderBy: { createdAt: 'desc' },
-        include: { shop: { select: { name: true } } }
+        include: { subscription: { include: { shop: { select: { name: true } } } } },
       }),
       this.prisma.payment.count(),
     ]);
@@ -145,7 +156,7 @@ export class AdminService {
       this.prisma.shop.count(),
       this.prisma.product.count(),
       this.prisma.payment.aggregate({
-        where: { status: 'SUCCESS' },
+        where: { status: PaymentStatus.SUCCESS },
         _sum: { amount: true },
       }),
     ]);
@@ -154,7 +165,7 @@ export class AdminService {
       totalUsers: users,
       totalShops: shops,
       totalProducts: products,
-      totalRevenue: payments._sum.amount || 0,
+      totalRevenue: payments._sum.amount ? Number(payments._sum.amount) : 0,
     };
   }
 
@@ -165,7 +176,7 @@ export class AdminService {
         skip: (page - 1) * limit,
         take: Number(limit),
         orderBy: { createdAt: 'desc' },
-        include: { user: { select: { email: true } } }
+        include: { user: { select: { email: true } } },
       }),
       this.prisma.auditLog.count(),
     ]);

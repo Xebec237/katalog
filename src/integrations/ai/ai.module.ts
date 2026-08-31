@@ -30,3 +30,5 @@ export class AiModule {
     };
   }
 }
+
+export { AiModule as AIModule };

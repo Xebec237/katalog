@@ -35,23 +35,40 @@ export class TemplatesService {
         active: dto.active ?? true,
       },
     });
-    await this.auditService.log(userId, AuditAction.CREATE, 'CatalogueTemplate', template.id, dto);
+    await this.auditService.log({
+      userId,
+      action: AuditAction.CREATE,
+      entity: 'CatalogueTemplate',
+      entityId: template.id,
+      changes: dto,
+    });
     return template;
   }
 
   async update(id: string, dto: UpdateTemplateDto, userId: string) {
     const template = await this.findOne(id);
     const updated = await this.prisma.catalogueTemplate.update({
-      where: { id },
+      where: { id: template.id },
       data: dto,
     });
-    await this.auditService.log(userId, AuditAction.UPDATE, 'CatalogueTemplate', id, dto);
+    await this.auditService.log({
+      userId,
+      action: AuditAction.UPDATE,
+      entity: 'CatalogueTemplate',
+      entityId: id,
+      changes: dto,
+    });
     return updated;
   }
 
   async remove(id: string, userId: string) {
-    await this.findOne(id);
-    await this.prisma.catalogueTemplate.delete({ where: { id } });
-    await this.auditService.log(userId, AuditAction.DELETE, 'CatalogueTemplate', id);
+    const template = await this.findOne(id);
+    await this.prisma.catalogueTemplate.delete({ where: { id: template.id } });
+    await this.auditService.log({
+      userId,
+      action: AuditAction.DELETE,
+      entity: 'CatalogueTemplate',
+      entityId: id,
+    });
   }
 }

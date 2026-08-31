@@ -19,7 +19,9 @@ export class CatalogueResponseDto {
   @ApiProperty()
   createdAt: Date;
 
-  constructor(partial: Partial<CatalogueResponseDto>) {
-    Object.assign(this, partial);
+  constructor(partial: any) {
+    if (partial) {
+      Object.assign(this, partial);
+    }
   }
 }

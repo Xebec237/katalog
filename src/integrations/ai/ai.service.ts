@@ -22,7 +22,9 @@ export class AiService {
     await this.prisma.aiGeneration.create({
       data: {
         shopId,
-        feature,
+        userId: shop.ownerId,
+        type: feature,
+        provider: 'openai',
       },
     });
   }
@@ -86,3 +88,6 @@ export class AiService {
     }
   }
 }
+
+export { AiService as AIService };
+

@@ -31,11 +31,11 @@ export const messages = {
     },
     validation: {
       required: 'Ce champ est requis',
-      invalidEmail: 'Format d\\'email invalide',
+      invalidEmail: "Format d'email invalide",
     },
     shop: {
       notFound: 'Boutique introuvable',
-      noAccess: 'Vous n\\'avez pas accès à cette boutique',
+      noAccess: "Vous n'avez pas accès à cette boutique",
     },
     product: {
       notFound: 'Produit introuvable',

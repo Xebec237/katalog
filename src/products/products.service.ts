@@ -4,7 +4,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductFilterDto } from './dto/product-filter.dto';
 import { ReorderImagesDto } from './dto/reorder-images.dto';
-import { ProductStatus } from '@prisma/client';
+import { ProductStatus, SubscriptionStatus } from '@prisma/client';
 import slugify from 'slugify';
 
 @Injectable()
@@ -13,21 +13,20 @@ export class ProductsService {
 
   async create(shopId: string, createProductDto: CreateProductDto) {
     const shop = await this.prisma.shop.findUnique({
-      where: { id: shopId },
-      include: {
-        members: {
-          where: { role: 'OWNER' },
-          include: { user: { include: { subscription: { include: { plan: true } } } } }
-        }
-      }
+      where: { id: shopId, deletedAt: null },
     });
 
-    if (!shop || !shop.members[0]) throw new NotFoundException('Boutique introuvable');
+    if (!shop) throw new NotFoundException('Boutique introuvable');
 
-    const maxProducts = shop.members[0].user.subscription?.plan?.maxProducts || 50;
+    const sub = await this.prisma.subscription.findFirst({
+      where: { shopId, status: SubscriptionStatus.ACTIVE },
+      include: { plan: true },
+    });
+
+    const maxProducts = sub?.plan?.maxProducts || 20;
 
     const productsCount = await this.prisma.product.count({
-      where: { shopId, deletedAt: null }
+      where: { shopId, deletedAt: null },
     });
 
     if (productsCount >= maxProducts) {
@@ -41,8 +40,8 @@ export class ProductsService {
         ...createProductDto,
         shopId,
         slug,
-        status: createProductDto.status || ProductStatus.DRAFT
-      }
+        status: createProductDto.status || ProductStatus.DRAFT,
+      },
     });
   }
 
@@ -64,9 +63,9 @@ export class ProductsService {
         include: { images: { orderBy: { position: 'asc' } }, category: true },
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.product.count({ where: whereClause })
+      this.prisma.product.count({ where: whereClause }),
     ]);
 
     return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
@@ -75,7 +74,7 @@ export class ProductsService {
   async findById(shopId: string, productId: string) {
     const product = await this.prisma.product.findFirst({
       where: { id: productId, shopId, deletedAt: null },
-      include: { images: { orderBy: { position: 'asc' } }, category: true }
+      include: { images: { orderBy: { position: 'asc' } }, category: true },
     });
 
     if (!product) throw new NotFoundException('Produit non trouvé');
@@ -89,14 +88,14 @@ export class ProductsService {
     if (dto.name && dto.name !== product.name) {
       slug = slugify(dto.name, { lower: true, strict: true });
       const existing = await this.prisma.product.findFirst({
-        where: { shopId, slug, id: { not: productId } }
+        where: { shopId, slug, id: { not: productId } },
       });
       if (existing) slug += '-' + Date.now().toString().slice(-4);
     }
 
     return this.prisma.product.update({
       where: { id: productId },
-      data: { ...dto, slug }
+      data: { ...dto, slug },
     });
   }
 
@@ -104,7 +103,7 @@ export class ProductsService {
     await this.findById(shopId, productId);
     return this.prisma.product.update({
       where: { id: productId },
-      data: { deletedAt: new Date() }
+      data: { deletedAt: new Date() },
     });
   }
 
@@ -112,24 +111,22 @@ export class ProductsService {
     await this.findById(shopId, productId);
     return this.prisma.product.update({
       where: { id: productId },
-      data: { status }
+      data: { status },
     });
   }
 
   async addImage(shopId: string, productId: string, file: Express.Multer.File) {
     await this.findById(shopId, productId);
     
-    // Simuler le traitement d'image, TODO intégration BullMQ
     const imageUrl = `/uploads/${file.originalname}`; 
-    
     const count = await this.prisma.productImage.count({ where: { productId } });
 
     const image = await this.prisma.productImage.create({
       data: {
         productId,
-        url: imageUrl,
-        position: count
-      }
+        originalUrl: imageUrl,
+        position: count,
+      },
     });
 
     return image;
@@ -137,7 +134,7 @@ export class ProductsService {
 
   async removeImage(shopId: string, productId: string, imageId: string) {
     const image = await this.prisma.productImage.findFirst({
-      where: { id: imageId, productId }
+      where: { id: imageId, productId },
     });
     if (!image) throw new NotFoundException('Image introuvable');
 
@@ -150,7 +147,7 @@ export class ProductsService {
     const updates = dto.images.map(img => 
       this.prisma.productImage.update({
         where: { id: img.id },
-        data: { position: img.position }
+        data: { position: img.position },
       })
     );
 

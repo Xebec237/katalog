@@ -78,6 +78,16 @@ export class AuthService {
   }
 
   async googleLogin(profile: { email: string; name: string; picture: string; providerId: string }): Promise<User> {
+    return this.socialLogin({ ...profile, provider: 'google' });
+  }
+
+  async socialLogin(profile: {
+    email: string;
+    name: string;
+    picture?: string;
+    providerId: string;
+    provider: string;
+  }): Promise<User> {
     let user = await this.usersService.findByEmail(profile.email);
 
     if (!user) {
@@ -92,14 +102,19 @@ export class AuthService {
     }
 
     const account = await this.prisma.account.findUnique({
-      where: { provider_providerAccountId: { provider: 'google', providerAccountId: profile.providerId } },
+      where: {
+        provider_providerAccountId: {
+          provider: profile.provider,
+          providerAccountId: profile.providerId,
+        },
+      },
     });
 
     if (!account) {
       await this.prisma.account.create({
         data: {
           userId: user.id,
-          provider: 'google',
+          provider: profile.provider,
           providerAccountId: profile.providerId,
         },
       });

@@ -19,7 +19,9 @@ export class TemplateResponseDto {
   @ApiProperty()
   active: boolean;
 
-  constructor(partial: Partial<TemplateResponseDto>) {
-    Object.assign(this, partial);
+  constructor(partial: any) {
+    if (partial) {
+      Object.assign(this, partial);
+    }
   }
 }

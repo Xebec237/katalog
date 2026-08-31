@@ -8,6 +8,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { GithubStrategy } from './strategies/github.strategy';
 import { TwoFactorService } from './two-factor/two-factor.service';
 import { TwoFactorController } from './two-factor/two-factor.controller';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -30,6 +31,7 @@ import { PrismaService } from '@/prisma/prisma.service';
     JwtRefreshStrategy,
     LocalStrategy,
     GoogleStrategy,
+    GithubStrategy,
   ],
   exports: [AuthService, JwtModule],
 })

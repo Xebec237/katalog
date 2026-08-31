@@ -12,6 +12,7 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { LocalAuthGuard } from '@/common/guards/local-auth.guard';
 import { JwtRefreshGuard } from '@/common/guards/jwt-refresh.guard';
 import { GoogleAuthGuard } from '@/common/guards/google-auth.guard';
+import { GithubAuthGuard } from '@/common/guards/github-auth.guard';
 import { User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
@@ -173,5 +174,35 @@ export class AuthController {
   async getMe(@CurrentUser() user: User) {
     const { passwordHash, ...userProfile } = user as any;
     return userProfile;
+  }
+
+  // ─── GitHub OAuth ───────────────────────────────────────────────────────────
+
+  @Public()
+  @Get('github')
+  @UseGuards(GithubAuthGuard)
+  @ApiOperation({ summary: 'Initiate GitHub OAuth' })
+  githubLogin() {
+    // passport redirects to GitHub automatically
+  }
+
+  @Public()
+  @Get('github/callback')
+  @UseGuards(GithubAuthGuard)
+  @ApiOperation({ summary: 'GitHub OAuth callback' })
+  async githubCallback(
+    @CurrentUser() user: User,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { accessToken, refreshToken } = await this.authService.login(user, req);
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    // Redirect to frontend with token
+    res.redirect(`${process.env.APP_URL || 'http://localhost:3000'}?token=${accessToken}`);
   }
 }
