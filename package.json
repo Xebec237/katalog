@@ -5,7 +5,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && tsc-alias",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -97,6 +97,7 @@
     "ts-jest": "^29.2.0",
     "ts-loader": "^9.5.0",
     "ts-node": "^10.9.0",
+    "tsc-alias": "^1.9.3",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.0"
   },
