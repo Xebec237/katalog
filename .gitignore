@@ -43,3 +43,4 @@ uploads/
 
 # Generated
 *.tsbuildinfo
+*.vsix
