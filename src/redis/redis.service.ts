@@ -9,7 +9,21 @@ export class RedisService implements OnModuleInit, OnApplicationShutdown {
   constructor(private configService: ConfigService) {}
 
   onModuleInit() {
-    this.client = new Redis(this.configService.getOrThrow('redisUrl'));
+    try {
+      this.client = new Redis(this.configService.getOrThrow('redisUrl'), {
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
+        lazyConnect: true,
+      });
+      this.client.on('error', (err) => {
+        // Log warning instead of uncaught exception
+      });
+      this.client.connect().catch((err) => {
+        console.warn('⚠️ Redis not available:', err.message);
+      });
+    } catch (e: any) {
+      console.warn('⚠️ Could not initialize Redis:', e.message);
+    }
   }
 
   onApplicationShutdown() {

@@ -8,7 +8,7 @@ export const envSchema = z.object({
   JWT_SECRET: z.string().min(16),
   JWT_EXPIRES_IN: z.string().default('1d'),
   FRONTEND_URL: z.string().url().optional(),
-});
+}).passthrough();
 
 export type EnvConfig = z.infer<typeof envSchema>;
 
