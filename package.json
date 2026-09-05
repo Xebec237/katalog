@@ -126,9 +126,7 @@
       "^@integrations/(.*)$": "<rootDir>/integrations/$1"
     }
   },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
-  },
+
   "allowScripts": {
     "@prisma/client@6.19.3": true,
     "@prisma/engines@6.19.3": true,
