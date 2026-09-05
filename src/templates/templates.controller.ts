@@ -4,9 +4,9 @@ import { TemplatesService } from './templates.service';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { TemplateResponseDto } from './dto/template-response.dto';
-import { Public } from '@/common/decorators/public.decorator';
-import { AdminGuard } from '@/admin/guards/admin.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
+import { AdminGuard } from '../admin/guards/admin.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @ApiTags('Templates')
 @Controller()

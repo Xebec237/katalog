@@ -1,8 +1,8 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { PrismaService } from '@/prisma/prisma.service';
-import { StorageService } from '@/integrations/storage/storage.service';
-import { AiService } from '@/integrations/ai/ai.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../integrations/storage/storage.service';
+import { AiService } from '../integrations/ai/ai.service';
 import { ImageJobStatus, ModerationStatus, ProductStatus } from '@prisma/client';
 import sharp from 'sharp';
 

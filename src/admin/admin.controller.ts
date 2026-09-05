@@ -2,7 +2,7 @@ import { Controller, Get, Patch, Post, Delete, Param, Body, UseGuards, Query } f
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { AdminGuard } from './guards/admin.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @ApiTags('Admin')
 @ApiBearerAuth()

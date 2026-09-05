@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { StorageService } from '@/integrations/storage/storage.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../integrations/storage/storage.service';
 import { ConfigService } from '@nestjs/config';
 import * as qrcode from 'qrcode';
 

@@ -5,10 +5,10 @@ import { UpdateShopDto } from './dto/update-shop.dto';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import { ShopAccessGuard } from '@/common/guards/shop-access.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { PaginationDto } from '@/common/pagination/pagination.dto';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { ShopAccessGuard } from '../common/guards/shop-access.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { PaginationDto } from '../common/pagination/pagination.dto';
 
 @ApiTags('shops')
 @ApiBearerAuth()

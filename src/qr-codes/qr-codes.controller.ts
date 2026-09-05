@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { QrCodesService } from './qr-codes.service';
-import { ShopAccessGuard } from '@/common/guards/shop-access.guard';
+import { ShopAccessGuard } from '../common/guards/shop-access.guard';
 
 @ApiTags('QR Codes')
 @ApiBearerAuth()

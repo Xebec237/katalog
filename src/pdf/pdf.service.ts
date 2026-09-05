@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { PrismaService } from '@/prisma/prisma.service';
-import { QuotaService } from '@/subscriptions/quota.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { QuotaService } from '../subscriptions/quota.service';
 
 @Injectable()
 export class PdfService {

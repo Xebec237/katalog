@@ -1,8 +1,8 @@
 import { Controller, Post, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PdfService } from './pdf.service';
-import { ShopAccessGuard } from '@/common/guards/shop-access.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { ShopAccessGuard } from '../common/guards/shop-access.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @ApiTags('PDF')
 @ApiBearerAuth()

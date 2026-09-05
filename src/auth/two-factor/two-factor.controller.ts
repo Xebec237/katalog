@@ -2,9 +2,9 @@ import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TwoFactorService } from './two-factor.service';
 import { Verify2FaDto, Validate2FaDto } from './two-factor.dto';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '@prisma/client';
-import { PrismaService } from '@/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @ApiTags('auth/2fa')
 @ApiBearerAuth()

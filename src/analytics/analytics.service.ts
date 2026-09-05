@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { RedisService } from '@/redis/redis.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../redis/redis.service';
 import { IngestEventDto } from './dto/ingest-event.dto';
 import * as crypto from 'crypto';
 import { AnalyticsEventType } from '@prisma/client';

@@ -5,9 +5,9 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductFilterDto } from './dto/product-filter.dto';
 import { ReorderImagesDto } from './dto/reorder-images.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import { ShopAccessGuard } from '@/common/guards/shop-access.guard';
-import { ShopId } from '@/common/decorators/shop-id.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { ShopAccessGuard } from '../common/guards/shop-access.guard';
+import { ShopId } from '../common/decorators/shop-id.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductStatus } from '@prisma/client';
 

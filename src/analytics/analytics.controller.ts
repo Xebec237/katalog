@@ -2,8 +2,8 @@ import { Controller, Post, Get, Param, Body, UseGuards, Req, Query } from '@nest
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AnalyticsService } from './analytics.service';
 import { IngestEventDto } from './dto/ingest-event.dto';
-import { Public } from '@/common/decorators/public.decorator';
-import { ShopAccessGuard } from '@/common/guards/shop-access.guard';
+import { Public } from '../common/decorators/public.decorator';
+import { ShopAccessGuard } from '../common/guards/shop-access.guard';
 import { Request } from 'express';
 
 @ApiTags('Analytics')

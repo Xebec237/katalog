@@ -1,7 +1,7 @@
 import { Injectable, Inject, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { AI_PROVIDER } from '@/common/constants/injection-tokens';
+import { AI_PROVIDER } from '../../common/constants/injection-tokens';
 import { AIProvider, ProductAnalysis, BoundingBox, ModerationResult } from './interfaces/ai-provider.interface';
-import { PrismaService } from '@/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class AiService {

@@ -1,7 +1,7 @@
 import { Injectable, Inject, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { PAYMENT_PROVIDER } from '@/common/constants/injection-tokens';
+import { PAYMENT_PROVIDER } from '../../common/constants/injection-tokens';
 import { PaymentProviderInterface, CreateCheckoutInput, WebhookEvent } from './interfaces/payment-provider.interface';
-import { PrismaService } from '@/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { PaymentProvider, PaymentStatus, SubscriptionStatus } from '@prisma/client';
 
 @Injectable()

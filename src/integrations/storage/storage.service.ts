@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { STORAGE_PROVIDER } from '@/common/constants/injection-tokens';
+import { STORAGE_PROVIDER } from '../../common/constants/injection-tokens';
 import { StorageProvider } from './interfaces/storage-provider.interface';
 
 @Injectable()

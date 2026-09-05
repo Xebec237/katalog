@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EMAIL_PROVIDER } from '@/common/constants/injection-tokens';
+import { EMAIL_PROVIDER } from '../../common/constants/injection-tokens';
 import { EmailProvider } from './interfaces/email-provider.interface';
 
 @Injectable()

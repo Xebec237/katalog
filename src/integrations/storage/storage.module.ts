@@ -1,6 +1,6 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { STORAGE_PROVIDER } from '@/common/constants/injection-tokens';
+import { STORAGE_PROVIDER } from '../../common/constants/injection-tokens';
 import { StorageService } from './storage.service';
 import { S3StorageAdapter } from './adapters/s3-storage.adapter';
 

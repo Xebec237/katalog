@@ -3,8 +3,8 @@ import { BullModule } from '@nestjs/bullmq';
 import { PdfService } from './pdf.service';
 import { PdfController } from './pdf.controller';
 import { PdfProcessor } from './pdf.processor';
-import { SubscriptionsModule } from '@/subscriptions/subscriptions.module';
-import { StorageModule } from '@/integrations/storage/storage.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { StorageModule } from '../integrations/storage/storage.module';
 
 @Module({
   imports: [

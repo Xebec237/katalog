@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { PrismaService } from '@/prisma/prisma.service';
-import { StorageService } from '@/integrations/storage/storage.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../integrations/storage/storage.service';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { NotificationType } from '@prisma/client';
 

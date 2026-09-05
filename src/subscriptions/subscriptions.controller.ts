@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionResponseDto } from './dto/subscription-response.dto';
 import { CheckoutDto } from './dto/checkout.dto';
-import { ShopAccessGuard } from '@/common/guards/shop-access.guard';
+import { ShopAccessGuard } from '../common/guards/shop-access.guard';
 
 @ApiTags('Subscriptions')
 @ApiBearerAuth()

@@ -1,12 +1,12 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PAYMENT_PROVIDER } from '@/common/constants/injection-tokens';
+import { PAYMENT_PROVIDER } from '../../common/constants/injection-tokens';
 import { PaymentService } from './payment.service';
 import { StripeAdapter } from './adapters/stripe.adapter';
 import { CinetpayAdapter } from './adapters/cinetpay.adapter';
 import { NotchpayAdapter } from './adapters/notchpay.adapter';
 import { PawapayAdapter } from './adapters/pawapay.adapter';
-import { PrismaModule } from '@/prisma/prisma.module';
+import { PrismaModule } from '../../prisma/prisma.module';
 import { ReconciliationService } from './reconciliation/reconciliation.service';
 import { ReconciliationProcessor } from './reconciliation/reconciliation.processor';
 import { PaymentWebhookController } from './webhooks/payment-webhook.controller';

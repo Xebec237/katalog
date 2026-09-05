@@ -4,8 +4,8 @@ import { CataloguesService } from './catalogues.service';
 import { CreateCatalogueDto } from './dto/create-catalogue.dto';
 import { UpdateCatalogueDto } from './dto/update-catalogue.dto';
 import { CatalogueResponseDto } from './dto/catalogue-response.dto';
-import { ShopAccessGuard } from '@/common/guards/shop-access.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { ShopAccessGuard } from '../common/guards/shop-access.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @ApiTags('Catalogues')
 @ApiBearerAuth()

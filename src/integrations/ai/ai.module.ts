@@ -1,9 +1,9 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AI_PROVIDER } from '@/common/constants/injection-tokens';
+import { AI_PROVIDER } from '../../common/constants/injection-tokens';
 import { AiService } from './ai.service';
 import { OpenAIAdapter } from './adapters/openai.adapter';
-import { PrismaModule } from '@/prisma/prisma.module';
+import { PrismaModule } from '../../prisma/prisma.module';
 
 @Global()
 @Module({})

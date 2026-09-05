@@ -1,10 +1,10 @@
 import { Injectable, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateShopDto } from './dto/create-shop.dto';
 import { UpdateShopDto } from './dto/update-shop.dto';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
-import { PaginationDto } from '@/common/pagination/pagination.dto';
+import { PaginationDto } from '../common/pagination/pagination.dto';
 import { ShopMemberRole, SubscriptionStatus } from '@prisma/client';
 import slugify from 'slugify';
 

@@ -1,4 +1,4 @@
-import { PaginationDto } from '@/common/pagination/pagination.dto';
+import { PaginationDto } from '../../common/pagination/pagination.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsEnum } from 'class-validator';
 import { ProductStatus } from '@prisma/client';

@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { QuotaService } from '@/subscriptions/quota.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { QuotaService } from '../subscriptions/quota.service';
 import { CreateCatalogueDto } from './dto/create-catalogue.dto';
 import { UpdateCatalogueDto } from './dto/update-catalogue.dto';
-import { AuditService } from '@/audit/audit.service';
+import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 

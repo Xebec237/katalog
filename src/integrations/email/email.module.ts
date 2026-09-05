@@ -1,6 +1,6 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { EMAIL_PROVIDER } from '@/common/constants/injection-tokens';
+import { EMAIL_PROVIDER } from '../../common/constants/injection-tokens';
 import { EmailService } from './email.service';
 import { ResendAdapter } from './adapters/resend.adapter';
 

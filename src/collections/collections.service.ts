@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
-import { PaginationDto } from '@/common/pagination/pagination.dto';
+import { PaginationDto } from '../common/pagination/pagination.dto';
 import slugify from 'slugify';
 
 @Injectable()

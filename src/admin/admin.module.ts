@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
-import { AuditModule } from '@/audit/audit.module';
-import { TemplatesModule } from '@/templates/templates.module';
+import { AuditModule } from '../audit/audit.module';
+import { TemplatesModule } from '../templates/templates.module';
 
 @Module({
   imports: [AuditModule, TemplatesModule],

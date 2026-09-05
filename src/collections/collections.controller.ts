@@ -4,10 +4,10 @@ import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
 import { AddProductsDto } from './dto/add-products.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import { ShopAccessGuard } from '@/common/guards/shop-access.guard';
-import { ShopId } from '@/common/decorators/shop-id.decorator';
-import { PaginationDto } from '@/common/pagination/pagination.dto';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { ShopAccessGuard } from '../common/guards/shop-access.guard';
+import { ShopId } from '../common/decorators/shop-id.decorator';
+import { PaginationDto } from '../common/pagination/pagination.dto';
 
 @ApiTags('collections')
 @ApiBearerAuth()
